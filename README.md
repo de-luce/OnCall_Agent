@@ -8,11 +8,11 @@
 
 ## 功能概览
 
-| 模块 | Agent 模式 | 说明 |
-|------|-----------|------|
-| 智能对话 | ReAct | 多轮对话 + 工具调用，可按需检索知识库 |
-| 知识库 | RAG | 上传 SOP 文档，分片向量化后语义检索问答 |
-| 故障排查 | Plan-Execute-Replan | 根据告警信息自动规划排查步骤并生成报告 |
+| 模块   | Agent 模式            | 说明                     |
+|------|---------------------|------------------------|
+| 智能对话 | ReAct               | 多轮对话 + 工具调用，可按需检索知识库   |
+| 知识库  | RAG                 | 上传 SOP 文档，分片向量化后语义检索问答 |
+| 故障排查 | Plan-Execute-Replan | 根据告警信息自动规划排查步骤并生成报告    |
 
 内置 Web 界面：`http://localhost:8080`
 
@@ -20,22 +20,22 @@
 
 ```mermaid
 flowchart TB
-    UI[Web UI] --> API[OnCallController]
-    API --> Chat[ChatAgent<br/>ReAct]
-    API --> Knowledge[KnowledgeAgent<br/>RAG]
-    API --> Ops[OpsAgent<br/>Plan-Execute-Replan]
+    UI["Web UI"] --> API["OnCallController"]
+    API --> Chat["ChatAgent (ReAct)"]
+    API --> Knowledge["KnowledgeAgent (RAG)"]
+    API --> Ops["OpsAgent (Plan Execute Replan)"]
 
-    Chat --> LLM[LM Studio Chat<br/>/v1/chat/completions]
+    Chat --> LLM["LM Studio Chat API"]
     Knowledge --> LLM
     Ops --> LLM
 
-    Chat --> Tool[KnowledgeSearchTool]
-    Tool --> VS[(SimpleVectorStore<br/>内存向量库)]
+    Chat --> Tool["KnowledgeSearchTool"]
+    Tool --> VS[("SimpleVectorStore 内存向量库")]
     Knowledge --> VS
 
-    VS --> Embed[LM Studio Embedding<br/>/api/v0/embeddings]
+    VS --> Embed["LM Studio Embedding API"]
 
-    Knowledge --> Store[(src/main/resources/store<br/>原始文件)]
+    Knowledge --> Store[("上传文件 store 目录")]
 ```
 
 ## 技术栈
@@ -82,39 +82,52 @@ export LM_API_TOKEN=your-token   # LM Studio 启用鉴权时设置
 主要配置见 `src/main/resources/application.yml`：
 
 ```yaml
-spring.ai.openai.base-url: http://127.0.0.1:1234          # Chat API（OpenAI 兼容）
-spring.ai.openai.chat.options.model: qwen/qwen3.5-2b        # Chat 模型
+spring:
+  ai:
+    openai:
+      base-url: http://127.0.0.1:1234
+      chat:
+        options:
+          model: qwen/qwen3.5-2b
 
-oncall.embedding.provider: lmstudio                         # lmstudio | local
-oncall.embedding.base-url: http://127.0.0.1:1234            # Embedding API
-oncall.embedding.model: text-embedding-nomic-embed-text-v1.5
-oncall.upload.storage-dir: src/main/resources/store         # 上传文件存储目录
+oncall:
+  embedding:
+    provider: lmstudio
+    base-url: http://127.0.0.1:1234
+    model: text-embedding-nomic-embed-text-v1.5
+  upload:
+    storage-dir: src/main/resources/store
 ```
 
 ### 环境变量
 
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `LOCAL_LLM_BASE_URL` | Chat API 地址 | `http://127.0.0.1:1234` |
-| `LOCAL_LLM_MODEL` | Chat 模型名 | `qwen/qwen3.5-2b` |
-| `EMBEDDING_PROVIDER` | Embedding 提供方 | `lmstudio` |
-| `EMBEDDING_MODEL` | Embedding 模型名 | `text-embedding-nomic-embed-text-v1.5` |
-| `LM_API_TOKEN` | LM Studio API Token | `lm-studio` |
-| `ONCALL_STORE_DIR` | 上传文件目录 | `src/main/resources/store` |
+| 变量                   | 说明                  | 默认值                                    |
+|----------------------|---------------------|----------------------------------------|
+| `LOCAL_LLM_BASE_URL` | Chat API 地址         | `http://127.0.0.1:1234`                |
+| `LOCAL_LLM_MODEL`    | Chat 模型名            | `qwen/qwen3.5-2b`                      |
+| `EMBEDDING_PROVIDER` | Embedding 提供方       | `lmstudio`                             |
+| `EMBEDDING_MODEL`    | Embedding 模型名       | `text-embedding-nomic-embed-text-v1.5` |
+| `LM_API_TOKEN`       | LM Studio API Token | `lm-studio`                            |
+| `ONCALL_STORE_DIR`   | 上传文件目录              | `src/main/resources/store`             |
 
 > **Embedding 说明**：Chat 走 OpenAI 兼容接口 `/v1/chat/completions`；Embedding 走 LM Studio 原生接口 `/api/v0/embeddings`。将 `EMBEDDING_PROVIDER=local` 可切换为本地 hash 向量（不调用 API，仅适合开发调试）。
 
+Chat 与 Embedding 接口说明：
+
+- Chat：`/v1/chat/completions`
+- Embedding：`/api/v0/embeddings`
+
 ## API 接口
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| `POST` | `/api/chat` | 智能对话（同步） |
-| `POST` | `/api/chat_stream` | 智能对话（SSE 流式） |
-| `POST` | `/api/upload_file` | 上传知识库文档 |
-| `GET` | `/api/knowledge/keywords` | 获取已入库文档与关键词 |
-| `POST` | `/api/knowledge/chat` | 知识库 RAG 问答 |
-| `POST` | `/api/ai_ops` | 告警故障排查 |
-| `GET` | `/api/health` | 健康检查 |
+| 方法     | 路径                        | 说明           |
+|--------|---------------------------|--------------|
+| `POST` | `/api/chat`               | 智能对话（同步）     |
+| `POST` | `/api/chat_stream`        | 智能对话（SSE 流式） |
+| `POST` | `/api/upload_file`        | 上传知识库文档      |
+| `GET`  | `/api/knowledge/keywords` | 获取已入库文档与关键词  |
+| `POST` | `/api/knowledge/chat`     | 知识库 RAG 问答   |
+| `POST` | `/api/ai_ops`             | 告警故障排查       |
+| `GET`  | `/api/health`             | 健康检查         |
 
 ### 请求示例
 
@@ -171,11 +184,11 @@ src/main/resources/
 
 ## 数据存储说明
 
-| 数据 | 存储位置 | 重启后 |
-|------|----------|--------|
-| 上传的原始文件 | `src/main/resources/store/` | 保留 |
-| 文档分片 + 向量 | JVM 内存（SimpleVectorStore） | 丢失，需重新上传 |
-| 关键词 / 文档列表 | 启动时扫描 store 目录恢复 | 文件名保留，分片数需重新向量化 |
+| 数据         | 存储位置                        | 重启后             |
+|------------|-----------------------------|-----------------|
+| 上传的原始文件    | `src/main/resources/store/` | 保留              |
+| 文档分片 + 向量  | JVM 内存（SimpleVectorStore）   | 丢失，需重新上传        |
+| 关键词 / 文档列表 | 启动时扫描 store 目录恢复            | 文件名保留，分片数需重新向量化 |
 
 ## 常见问题
 
