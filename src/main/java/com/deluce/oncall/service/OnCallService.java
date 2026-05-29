@@ -4,6 +4,7 @@ import com.deluce.oncall.agent.ChatAgent;
 import com.deluce.oncall.agent.KnowledgeAgent;
 import com.deluce.oncall.agent.OpsAgent;
 import com.deluce.oncall.dto.*;
+import com.deluce.oncall.rag.KnowledgeCatalog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,16 +24,19 @@ public class OnCallService {
     private final ChatAgent chatAgent;
     private final KnowledgeAgent knowledgeAgent;
     private final OpsAgent opsAgent;
+    private final KnowledgeCatalog knowledgeCatalog;
     private final Path uploadDir;
 
     public OnCallService(
             ChatAgent chatAgent,
             KnowledgeAgent knowledgeAgent,
             OpsAgent opsAgent,
+            KnowledgeCatalog knowledgeCatalog,
             @Value("${oncall.upload.storage-dir}") String uploadDir) throws Exception {
         this.chatAgent = chatAgent;
         this.knowledgeAgent = knowledgeAgent;
         this.opsAgent = opsAgent;
+        this.knowledgeCatalog = knowledgeCatalog;
         this.uploadDir = Path.of(uploadDir);
         Files.createDirectories(this.uploadDir);
     }
@@ -74,6 +78,10 @@ public class OnCallService {
                 result.executedSteps(),
                 result.report()
         );
+    }
+
+    public KnowledgeCatalogResponse knowledgeCatalog() {
+        return knowledgeCatalog.snapshot();
     }
 
     public ChatResponse knowledgeChat(ChatRequest request) {

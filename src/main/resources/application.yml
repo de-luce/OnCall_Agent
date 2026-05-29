@@ -35,7 +35,7 @@ oncall:
     max-messages: 20
     summary-threshold: 12
   upload:
-    storage-dir: ${java.io.tmpdir}/oncall-uploads
+    storage-dir: ${ONCALL_STORE_DIR:src/main/resources/store}
 
 server:
   port: 8080

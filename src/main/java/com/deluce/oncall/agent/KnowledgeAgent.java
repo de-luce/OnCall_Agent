@@ -4,6 +4,7 @@ import com.deluce.oncall.rag.DocumentLoader;
 import com.deluce.oncall.rag.DocumentIndexer;
 import com.deluce.oncall.rag.DocumentRetriever;
 import com.deluce.oncall.rag.DocumentTransformer;
+import com.deluce.oncall.rag.KnowledgeCatalog;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -28,6 +29,7 @@ public class KnowledgeAgent {
     private final DocumentTransformer documentTransformer;
     private final DocumentIndexer documentIndexer;
     private final DocumentRetriever documentRetriever;
+    private final KnowledgeCatalog knowledgeCatalog;
     private final ChatClient ragChatClient;
 
     public KnowledgeAgent(
@@ -35,18 +37,22 @@ public class KnowledgeAgent {
             DocumentTransformer documentTransformer,
             DocumentIndexer documentIndexer,
             DocumentRetriever documentRetriever,
+            KnowledgeCatalog knowledgeCatalog,
             @Qualifier("ragChatClient") ChatClient ragChatClient) {
         this.documentLoader = documentLoader;
         this.documentTransformer = documentTransformer;
         this.documentIndexer = documentIndexer;
         this.documentRetriever = documentRetriever;
+        this.knowledgeCatalog = knowledgeCatalog;
         this.ragChatClient = ragChatClient;
     }
 
     public int ingestDocument(Path filePath) throws Exception {
         List<Document> rawDocuments = documentLoader.load(filePath);
         List<Document> chunks = documentTransformer.transform(rawDocuments);
-        return documentIndexer.index(chunks);
+        int chunkCount = documentIndexer.index(chunks);
+        knowledgeCatalog.registerIngested(filePath, chunks, chunkCount);
+        return chunkCount;
     }
 
     public String answer(String question) {

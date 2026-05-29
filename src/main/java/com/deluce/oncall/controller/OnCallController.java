@@ -61,6 +61,11 @@ public class OnCallController {
         return ApiResult.ok(onCallService.aiOps(request));
     }
 
+    @GetMapping("/knowledge/keywords")
+    public ApiResult<KnowledgeCatalogResponse> knowledgeKeywords() {
+        return ApiResult.ok(onCallService.knowledgeCatalog());
+    }
+
     @PostMapping("/knowledge/chat")
     public ApiResult<ChatResponse> knowledgeChat(@Valid @RequestBody ChatRequest request) {
         log.info("[知识库问答] sessionId={}, message={}", request.sessionId(), request.message());

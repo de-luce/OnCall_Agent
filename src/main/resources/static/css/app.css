@@ -395,6 +395,71 @@ body {
     font-size: 0.85rem;
 }
 
+.keyword-meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+}
+
+.keyword-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-height: 2rem;
+}
+
+.keyword-tag {
+    padding: 0.35rem 0.75rem;
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    border-radius: 999px;
+    color: var(--text);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.keyword-tag:hover {
+    background: rgba(59, 130, 246, 0.22);
+    border-color: rgba(59, 130, 246, 0.45);
+}
+
+.keyword-empty {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.document-list {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.document-list h4 {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.document-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.45rem 0;
+    font-size: 0.82rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.document-item:last-child {
+    border-bottom: none;
+}
+
+.document-item span:last-child {
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
 .inline-form {
     display: flex;
     gap: 0.75rem;

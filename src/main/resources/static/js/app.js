@@ -15,6 +15,17 @@ function setSessionId(id) {
     $('#sessionId').value = id;
 }
 
+async function apiGet(path) {
+    console.log('[发送]', path);
+    const res = await fetch(`${API}${path}`);
+    const json = await res.json();
+    console.log('[接收]', path, res.status, json);
+    if (json.code !== 0) {
+        throw new Error(json.message || '请求失败');
+    }
+    return json.data;
+}
+
 async function apiPost(path, body) {
     console.log('[发送]', path, body);
     const res = await fetch(`${API}${path}`, {
@@ -162,6 +173,62 @@ async function handleChatSubmit(e) {
     }
 }
 
+async function loadKnowledgeKeywords() {
+    const meta = $('#keywordMeta');
+    const keywordList = $('#keywordList');
+    const documentList = $('#documentList');
+
+    try {
+        const data = await apiGet('/knowledge/keywords');
+        meta.textContent = `共 ${data.documentCount} 个文档 · ${data.keywordCount} 个关键词`;
+
+        keywordList.innerHTML = '';
+        if (!data.keywords || data.keywords.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'keyword-empty';
+            empty.textContent = '暂无关键词，请先上传 SOP 文档';
+            keywordList.appendChild(empty);
+        } else {
+            data.keywords.forEach((keyword) => {
+                const tag = document.createElement('button');
+                tag.type = 'button';
+                tag.className = 'keyword-tag';
+                tag.textContent = keyword;
+                tag.addEventListener('click', () => {
+                    $('#knowledgeInput').value = keyword;
+                    $('#knowledgeInput').focus();
+                });
+                keywordList.appendChild(tag);
+            });
+        }
+
+        documentList.innerHTML = '';
+        if (data.documents && data.documents.length > 0) {
+            documentList.classList.remove('hidden');
+            const title = document.createElement('h4');
+            title.textContent = '已入库文档';
+            documentList.appendChild(title);
+
+            data.documents.forEach((doc) => {
+                const item = document.createElement('div');
+                item.className = 'document-item';
+                const chunkText = doc.chunkCount > 0 ? `${doc.chunkCount} 个分片` : '待重新向量化';
+                item.innerHTML = `<span>${doc.displayName}</span><span>${chunkText}</span>`;
+                documentList.appendChild(item);
+            });
+        } else {
+            documentList.classList.add('hidden');
+        }
+    } catch (err) {
+        meta.textContent = '关键词加载失败';
+        keywordList.innerHTML = '';
+        const empty = document.createElement('div');
+        empty.className = 'keyword-empty';
+        empty.textContent = err.message;
+        keywordList.appendChild(empty);
+    }
+}
+
 async function uploadFile(file) {
     const formData = new FormData();
     formData.append('file', file);
@@ -213,6 +280,7 @@ async function handleFile(file) {
         const data = await uploadFile(file);
         result.textContent = `✓ ${data.message}（${data.fileName}，${data.chunkCount} 个分片）`;
         showToast('文档上传成功');
+        await loadKnowledgeKeywords();
     } catch (err) {
         result.textContent = `✗ ${err.message}`;
         showToast(err.message, 'error');
@@ -294,6 +362,9 @@ function setupTabs() {
             $$('.panel').forEach((p) => p.classList.remove('active'));
             btn.classList.add('active');
             $(`#panel-${tab}`).classList.add('active');
+            if (tab === 'knowledge') {
+                loadKnowledgeKeywords();
+            }
         });
     });
 }
@@ -316,6 +387,7 @@ function init() {
     setupTabs();
     setupUpload();
     setupChatInput();
+    loadKnowledgeKeywords();
 
     $('#chatForm').addEventListener('submit', handleChatSubmit);
     $('#knowledgeForm').addEventListener('submit', handleKnowledgeSubmit);
