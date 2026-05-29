@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnCall Agent</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">⚡</div>
+            <div>
+                <h1>OnCall Agent</h1>
+                <p>智能运维助手</p>
+            </div>
+        </div>
+        <nav class="nav">
+            <button class="nav-item active" data-tab="chat">
+                <span class="nav-icon">💬</span>
+                智能对话
+            </button>
+            <button class="nav-item" data-tab="knowledge">
+                <span class="nav-icon">📚</span>
+                知识库
+            </button>
+            <button class="nav-item" data-tab="ops">
+                <span class="nav-icon">🔧</span>
+                故障排查
+            </button>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="status" id="healthStatus">
+                <span class="status-dot"></span>
+                <span>检测中...</span>
+            </div>
+            <label class="session-label">会话 ID</label>
+            <input type="text" id="sessionId" class="session-input" placeholder="自动生成">
+            <button type="button" class="btn btn-ghost btn-sm" id="newSessionBtn">新建会话</button>
+        </div>
+    </aside>
+
+    <main class="main">
+        <!-- 智能对话 -->
+        <section class="panel active" id="panel-chat">
+            <header class="panel-header">
+                <div>
+                    <h2>智能对话</h2>
+                    <p>ReAct 模式 · 支持知识库检索 · SSE 流式输出</p>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="streamToggle" checked>
+                    <span>流式输出</span>
+                </label>
+            </header>
+            <div class="chat-messages" id="chatMessages"></div>
+            <form class="chat-input-bar" id="chatForm">
+                <textarea id="chatInput" rows="1" placeholder="输入运维问题，例如：连接池耗尽怎么排查？"></textarea>
+                <button type="submit" class="btn btn-primary" id="chatSendBtn">发送</button>
+            </form>
+        </section>
+
+        <!-- 知识库 -->
+        <section class="panel" id="panel-knowledge">
+            <header class="panel-header">
+                <div>
+                    <h2>知识库</h2>
+                    <p>上传 SOP 文档 · RAG 向量检索问答</p>
+                </div>
+            </header>
+            <div class="knowledge-layout">
+                <div class="card upload-card">
+                    <h3>上传文档</h3>
+                    <p class="hint">支持 PDF、Markdown、Word 等格式，上传后自动分片并向量化入库。</p>
+                    <div class="upload-zone" id="uploadZone">
+                        <input type="file" id="fileInput" hidden accept=".pdf,.md,.txt,.doc,.docx,.html">
+                        <div class="upload-placeholder">
+                            <span class="upload-icon">📄</span>
+                            <p>拖拽文件到此处，或 <button type="button" class="link-btn" id="pickFileBtn">选择文件</button></p>
+                        </div>
+                    </div>
+                    <div class="upload-result hidden" id="uploadResult"></div>
+                </div>
+                <div class="card">
+                    <h3>知识库问答</h3>
+                    <form id="knowledgeForm" class="inline-form">
+                        <input type="text" id="knowledgeInput" placeholder="基于已上传文档提问...">
+                        <button type="submit" class="btn btn-primary">提问</button>
+                    </form>
+                    <div class="answer-box hidden" id="knowledgeAnswer"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 故障排查 -->
+        <section class="panel" id="panel-ops">
+            <header class="panel-header">
+                <div>
+                    <h2>故障排查</h2>
+                    <p>Plan-Execute-Replan · 内置示例日志与指标</p>
+                </div>
+            </header>
+            <form class="ops-form card" id="opsForm">
+                <div class="form-row">
+                    <label for="serviceName">服务名称</label>
+                    <input type="text" id="serviceName" placeholder="payment-service" value="payment-service">
+                </div>
+                <div class="form-row">
+                    <label for="alertMessage">告警信息</label>
+                    <textarea id="alertMessage" rows="3" placeholder="例如：payment-service 连接池耗尽，错误率 12%，P99 延迟 2800ms"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" id="opsSubmitBtn">开始排查</button>
+            </form>
+            <div class="ops-result hidden" id="opsResult">
+                <div class="ops-grid">
+                    <div class="card ops-card">
+                        <h3>根因分析</h3>
+                        <p id="opsRootCause"></p>
+                    </div>
+                    <div class="card ops-card">
+                        <h3>处理建议</h3>
+                        <p id="opsRecommendation"></p>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>执行步骤</h3>
+                    <ol id="opsSteps"></ol>
+                </div>
+                <div class="card">
+                    <h3>完整报告</h3>
+                    <pre id="opsReport"></pre>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="/js/app.js"></script>
+</body>
+</html>
