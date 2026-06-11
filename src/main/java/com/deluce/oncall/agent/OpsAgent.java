@@ -110,7 +110,11 @@ public class OpsAgent {
     }
 
     private String executeStep(PlanStep step, String service) {
-        return switch (step.tool()) {
+        String tool = step.tool();
+        if (tool == null || tool.isBlank() || "none".equalsIgnoreCase(tool)) {
+            return "（无需工具，已完成分析步骤）";
+        }
+        return switch (tool) {
             case "queryLogs" -> logQueryTool.queryLogs(service, "ERROR");
             case "queryMetrics" -> metricsQueryTool.queryMetrics(service);
             case "acknowledgeAlert" -> alertAckTool.acknowledgeAlert(service, step.step());
@@ -124,7 +128,12 @@ public class OpsAgent {
             if (cleaned.startsWith("```")) {
                 cleaned = cleaned.replaceAll("```json?", "").replace("```", "").trim();
             }
-            return objectMapper.readValue(cleaned, new TypeReference<>() {});
+            List<PlanStep> steps = objectMapper.readValue(cleaned, new TypeReference<>() {});
+            return steps.stream()
+                    .map(s -> new PlanStep(
+                            s.step() != null ? s.step() : "未命名步骤",
+                            s.tool() != null && !s.tool().isBlank() ? s.tool() : "none"))
+                    .toList();
         } catch (Exception e) {
             return List.of(
                     new PlanStep("查看 " + "payment-service" + " 错误日志", "queryLogs"),
