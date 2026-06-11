@@ -5,28 +5,19 @@ spring:
     multipart:
       max-file-size: 20MB
       max-request-size: 20MB
-  autoconfigure:
-    exclude:
-      - org.springframework.ai.model.openai.autoconfigure.OpenAiEmbeddingAutoConfiguration
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY:lm-studio}
-      base-url: ${LOCAL_LLM_BASE_URL:http://127.0.0.1:1234}
+      api-key: ${OPENAI_API_KEY:lm-studio}}
+      base-url: ${OPENAI_API_BASE_URL:http://127.0.0.1:1234}
       chat:
         options:
           model: ${LOCAL_LLM_MODEL:qwen/qwen3.5-2b}
           temperature: 0.3
+      embedding:
+        options:
+          model: ${EMBEDDING_MODEL:text-embedding-nomic-embed-text-v1.5}
 
 oncall:
-  embedding:
-    # lmstudio = LM Studio 原生 POST /api/v0/embeddings
-    # local    = 本地 hash 向量（不调用 API）
-    provider: ${EMBEDDING_PROVIDER:lmstudio}
-    base-url: ${EMBEDDING_BASE_URL:http://127.0.0.1:1234}
-    api-key: ${LM_API_TOKEN:${EMBEDDING_API_KEY:lm-studio}}
-    model: ${EMBEDDING_MODEL:text-embedding-nomic-embed-text-v1.5}
-    path: /api/v0/embeddings
-    dimensions: 768
   rag:
     chunk-size: 800
     chunk-overlap: 200

@@ -180,7 +180,7 @@ async function loadKnowledgeKeywords() {
 
     try {
         const data = await apiGet('/knowledge/keywords');
-        meta.textContent = `共 ${data.documentCount} 个文档 · ${data.keywordCount} 个关键词`;
+        meta.textContent = `共 ${data.documents.length} 个文档 · ${data.keywords.length} 个关键词`;
 
         keywordList.innerHTML = '';
         if (!data.keywords || data.keywords.length === 0) {

@@ -13,33 +13,23 @@ public class AiStartupLogger {
     private static final Logger log = LoggerFactory.getLogger(AiStartupLogger.class);
 
     @Value("${spring.ai.openai.base-url}")
-    private String chatBaseUrl;
+    private String baseUrl;
 
     @Value("${spring.ai.openai.chat.options.model}")
     private String chatModel;
 
-    @Value("${oncall.embedding.provider:lmstudio}")
-    private String embeddingProvider;
-
-    @Value("${oncall.embedding.base-url}")
-    private String embeddingBaseUrl;
-
-    @Value("${oncall.embedding.path:/api/v0/embeddings}")
-    private String embeddingPath;
-
-    @Value("${oncall.embedding.model}")
+    @Value("${spring.ai.openai.embedding.options.model}")
     private String embeddingModel;
 
     @EventListener(ApplicationReadyEvent.class)
     public void logAiConfig() {
+        String root = baseUrl.replaceAll("/+$", "").replaceAll("/v1$", "");
         log.info("========== LM Studio 配置 ==========");
-        log.info("Chat  endpoint : {}/v1/chat/completions", chatBaseUrl.replaceAll("/+$", ""));
-        log.info("Chat  model     : {}", chatModel);
-        log.info("Embed provider  : {}", embeddingProvider);
-        if ("lmstudio".equalsIgnoreCase(embeddingProvider)) {
-            log.info("Embed endpoint  : {}{}", embeddingBaseUrl.replaceAll("/+$", ""), embeddingPath);
-            log.info("Embed model     : {}", embeddingModel);
-        }
+        log.info("Base URL        : {}", root);
+        log.info("Chat endpoint   : {}/v1/chat/completions", root);
+        log.info("Chat model      : {}", chatModel);
+        log.info("Embed endpoint  : {}/v1/embeddings", root);
+        log.info("Embed model     : {}", embeddingModel);
         log.info("====================================");
     }
 }

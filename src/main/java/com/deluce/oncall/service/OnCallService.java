@@ -5,8 +5,6 @@ import com.deluce.oncall.agent.KnowledgeAgent;
 import com.deluce.oncall.agent.OpsAgent;
 import com.deluce.oncall.dto.*;
 import com.deluce.oncall.rag.KnowledgeCatalog;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,8 +16,6 @@ import java.util.UUID;
 
 @Service
 public class OnCallService {
-
-    private static final Logger log = LoggerFactory.getLogger(OnCallService.class);
 
     private final ChatAgent chatAgent;
     private final KnowledgeAgent knowledgeAgent;
@@ -43,17 +39,12 @@ public class OnCallService {
 
     public ChatResponse chat(ChatRequest request) {
         String sessionId = resolveSessionId(request.sessionId());
-        log.info("[调用 LLM] chat mode=sync, sessionId={}", sessionId);
-        long start = System.currentTimeMillis();
         String answer = chatAgent.chat(request.message(), sessionId);
-        log.info("[LLM 响应] chat mode=sync, sessionId={}, elapsed={}ms, answerLength={}",
-                sessionId, System.currentTimeMillis() - start, answer != null ? answer.length() : 0);
-        return new ChatResponse(sessionId, answer, "CHAT_REACT");
+        return new ChatResponse(sessionId, answer);
     }
 
     public Flux<String> chatStream(ChatRequest request) {
         String sessionId = resolveSessionId(request.sessionId());
-        log.info("[调用 LLM] chat mode=stream, sessionId={}", sessionId);
         return chatAgent.chatStream(request.message(), sessionId);
     }
 
@@ -86,11 +77,8 @@ public class OnCallService {
 
     public ChatResponse knowledgeChat(ChatRequest request) {
         String sessionId = resolveSessionId(request.sessionId());
-        log.info("[调用 LLM] knowledge chat, sessionId={}", sessionId);
-        long start = System.currentTimeMillis();
         String answer = knowledgeAgent.answer(request.message());
-        log.info("[LLM 响应] knowledge chat, sessionId={}, elapsed={}ms", sessionId, System.currentTimeMillis() - start);
-        return new ChatResponse(sessionId, answer, "KNOWLEDGE_RAG");
+        return new ChatResponse(sessionId, answer);
     }
 
     private String resolveSessionId(String sessionId) {

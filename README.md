@@ -33,7 +33,7 @@ flowchart TB
     Tool --> VS[("SimpleVectorStore 内存向量库")]
     Knowledge --> VS
 
-    VS --> Embed["LM Studio Embedding API"]
+    VS --> Embed["LM Studio /v1/embeddings"]
 
     Knowledge --> Store[("上传文件 store 目录")]
 ```
@@ -42,10 +42,10 @@ flowchart TB
 
 - Java 21
 - Spring Boot 3.5.5
-- Spring AI 1.1.2（OpenAI 兼容 Chat + 自定义 Embedding）
+- Spring AI 1.1.2（OpenAI 兼容 Chat + Embedding）
 - LM Studio（本地 LLM / Embedding）
 - SimpleVectorStore（内存向量库）
-- Tika / PDF Document Reader（文档解析）
+- Tika Document Reader（文档解析）
 
 ## 环境要求
 
@@ -89,12 +89,11 @@ spring:
       chat:
         options:
           model: qwen/qwen3.5-2b
+      embedding:
+        options:
+          model: text-embedding-nomic-embed-text-v1.5
 
 oncall:
-  embedding:
-    provider: lmstudio
-    base-url: http://127.0.0.1:1234
-    model: text-embedding-nomic-embed-text-v1.5
   upload:
     storage-dir: src/main/resources/store
 ```
@@ -105,17 +104,11 @@ oncall:
 |----------------------|---------------------|----------------------------------------|
 | `LOCAL_LLM_BASE_URL` | Chat API 地址         | `http://127.0.0.1:1234`                |
 | `LOCAL_LLM_MODEL`    | Chat 模型名            | `qwen/qwen3.5-2b`                      |
-| `EMBEDDING_PROVIDER` | Embedding 提供方       | `lmstudio`                             |
 | `EMBEDDING_MODEL`    | Embedding 模型名       | `text-embedding-nomic-embed-text-v1.5` |
 | `LM_API_TOKEN`       | LM Studio API Token | `lm-studio`                            |
 | `ONCALL_STORE_DIR`   | 上传文件目录              | `src/main/resources/store`             |
 
-> **Embedding 说明**：Chat 走 OpenAI 兼容接口 `/v1/chat/completions`；Embedding 走 LM Studio 原生接口 `/api/v0/embeddings`。将 `EMBEDDING_PROVIDER=local` 可切换为本地 hash 向量（不调用 API，仅适合开发调试）。
-
-Chat 与 Embedding 接口说明：
-
-- Chat：`/v1/chat/completions`
-- Embedding：`/api/v0/embeddings`
+> **LM Studio OpenAI 兼容**：Chat 与 Embedding 均通过同一 `base-url` 访问 LM Studio，分别对应 `/v1/chat/completions` 与 `/v1/embeddings`。详见 [LM Studio OpenAI 兼容文档](https://lmstudio.ai/docs/developer/openai-compat)。
 
 ## API 接口
 
@@ -170,7 +163,6 @@ src/main/java/com/deluce/oncall/
 ├── config/          # AI、Embedding、RAG 配置
 ├── controller/      # REST API
 ├── dto/             # 请求/响应对象
-├── embedding/       # LM Studio Embedding 客户端
 ├── rag/             # 文档加载、分片、索引、检索
 ├── service/         # 业务编排
 ├── tool/            # Agent 工具（日志、指标、知识检索等）
@@ -201,7 +193,7 @@ src/main/resources/
 **上传文档报 `No models loaded`**
 
 - 需要在 LM Studio 中加载 Embedding 模型
-- 确认 `oncall.embedding.model` 与 LM Studio 中模型名一致
+- 确认 `spring.ai.openai.embedding.options.model` 与 LM Studio 中模型名一致
 
 **重启后知识库问答搜不到内容**
 

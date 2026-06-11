@@ -1,12 +1,12 @@
 package com.deluce.oncall.agent;
 
 import com.deluce.oncall.rag.DocumentLoader;
-import com.deluce.oncall.rag.DocumentIndexer;
 import com.deluce.oncall.rag.DocumentRetriever;
 import com.deluce.oncall.rag.DocumentTransformer;
 import com.deluce.oncall.rag.KnowledgeCatalog;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -27,44 +27,44 @@ public class KnowledgeAgent {
 
     private final DocumentLoader documentLoader;
     private final DocumentTransformer documentTransformer;
-    private final DocumentIndexer documentIndexer;
+    private final VectorStore vectorStore;
     private final DocumentRetriever documentRetriever;
     private final KnowledgeCatalog knowledgeCatalog;
-    private final ChatClient ragChatClient;
+    private final ChatClient llmChatClient;
 
     public KnowledgeAgent(
             DocumentLoader documentLoader,
             DocumentTransformer documentTransformer,
-            DocumentIndexer documentIndexer,
+            VectorStore vectorStore,
             DocumentRetriever documentRetriever,
             KnowledgeCatalog knowledgeCatalog,
-            @Qualifier("ragChatClient") ChatClient ragChatClient) {
+            @Qualifier("llmChatClient") ChatClient llmChatClient) {
         this.documentLoader = documentLoader;
         this.documentTransformer = documentTransformer;
-        this.documentIndexer = documentIndexer;
+        this.vectorStore = vectorStore;
         this.documentRetriever = documentRetriever;
         this.knowledgeCatalog = knowledgeCatalog;
-        this.ragChatClient = ragChatClient;
+        this.llmChatClient = llmChatClient;
     }
 
     public int ingestDocument(Path filePath) throws Exception {
         List<Document> rawDocuments = documentLoader.load(filePath);
         List<Document> chunks = documentTransformer.transform(rawDocuments);
-        int chunkCount = documentIndexer.index(chunks);
-        knowledgeCatalog.registerIngested(filePath, chunks, chunkCount);
-        return chunkCount;
+        vectorStore.add(chunks);
+        knowledgeCatalog.registerIngested(filePath, chunks, chunks.size());
+        return chunks.size();
     }
 
     public String answer(String question) {
         String context = documentRetriever.buildContext(question);
         if (context.isBlank()) {
-            return ragChatClient.prompt()
+            return llmChatClient.prompt()
                     .system(SYSTEM_PROMPT)
                     .user(question)
                     .call()
                     .content();
         }
-        return ragChatClient.prompt()
+        return llmChatClient.prompt()
                 .system(SYSTEM_PROMPT)
                 .user(u -> u.text("""
                         用户问题：{question}

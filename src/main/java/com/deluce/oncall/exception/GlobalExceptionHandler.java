@@ -1,9 +1,9 @@
 package com.deluce.oncall.exception;
 
+import com.deluce.oncall.controller.OnCallController;
 import com.deluce.oncall.dto.ApiResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.deluce.oncall.embedding.EmbeddingException;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -11,17 +11,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@RestControllerAdvice
+@RestControllerAdvice(assignableTypes = OnCallController.class)
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-
-    @ExceptionHandler(EmbeddingException.class)
-    @ResponseStatus(HttpStatus.BAD_GATEWAY)
-    public ApiResult<Void> handleEmbeddingException(EmbeddingException ex) {
-        log.error("[Embedding 调用失败] {}", ex.getMessage(), ex);
-        return ApiResult.fail(ex.getMessage());
-    }
 
     @ExceptionHandler(NonTransientAiException.class)
     @ResponseStatus(HttpStatus.BAD_GATEWAY)

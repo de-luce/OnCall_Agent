@@ -44,7 +44,7 @@ public class OpsAgent {
     private final ObjectMapper objectMapper;
 
     public OpsAgent(
-            @Qualifier("chatClient") ChatClient chatClient,
+            @Qualifier("llmChatClient") ChatClient chatClient,
             LogQueryTool logQueryTool,
             MetricsQueryTool metricsQueryTool,
             AlertAckTool alertAckTool,

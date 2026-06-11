@@ -15,7 +15,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -73,7 +72,7 @@ public class KnowledgeCatalog {
                 .toList();
         List<String> keywordList = new ArrayList<>(keywords);
         keywordList.sort(String::compareToIgnoreCase);
-        return new KnowledgeCatalogResponse(keywordList, documentList, keywordList.size(), documentList.size());
+        return new KnowledgeCatalogResponse(keywordList, documentList);
     }
 
     private void registerExistingFile(Path filePath) {
