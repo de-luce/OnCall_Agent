@@ -52,7 +52,7 @@ flowchart TB
 1. **JDK 21**
 2. **LM Studio**，并开启 Local Server（默认 `http://127.0.0.1:1234`）
 3. 在 LM Studio 中加载以下模型：
-   - **Chat 模型**（默认 `qwen/qwen3.5-2b`）
+   - **Chat 模型**（默认 `qwen/qwen3.5-9b`）
    - **Embedding 模型**（默认 `text-embedding-nomic-embed-text-v1.5`）
 
 ## 快速开始
@@ -62,7 +62,7 @@ git clone https://github.com/de-luce/OnCall_Agent.git
 cd OnCall_Agent
 
 # 可选：环境变量
-export LOCAL_LLM_MODEL=qwen/qwen3.5-2b
+export LOCAL_LLM_MODEL=qwen/qwen3.5-9b
 export EMBEDDING_MODEL=text-embedding-nomic-embed-text-v1.5
 export LM_API_TOKEN=your-token   # LM Studio 启用鉴权时设置
 
@@ -88,7 +88,7 @@ spring:
       base-url: http://127.0.0.1:1234
       chat:
         options:
-          model: qwen/qwen3.5-2b
+          model: qwen/qwen3.5-9b
       embedding:
         options:
           model: text-embedding-nomic-embed-text-v1.5
@@ -103,7 +103,7 @@ oncall:
 | 变量                   | 说明                  | 默认值                                    |
 |----------------------|---------------------|----------------------------------------|
 | `LOCAL_LLM_BASE_URL` | Chat API 地址         | `http://127.0.0.1:1234`                |
-| `LOCAL_LLM_MODEL`    | Chat 模型名            | `qwen/qwen3.5-2b`                      |
+| `LOCAL_LLM_MODEL`    | Chat 模型名            | `qwen/qwen3.5-9b`                      |
 | `EMBEDDING_MODEL`    | Embedding 模型名       | `text-embedding-nomic-embed-text-v1.5` |
 | `LM_API_TOKEN`       | LM Studio API Token | `lm-studio`                            |
 | `ONCALL_STORE_DIR`   | 上传文件目录              | `src/main/resources/store`             |

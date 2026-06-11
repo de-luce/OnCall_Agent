@@ -11,7 +11,7 @@ spring:
       base-url: ${OPENAI_API_BASE_URL:http://127.0.0.1:1234}
       chat:
         options:
-          model: ${LOCAL_LLM_MODEL:qwen/qwen3.5-2b}
+          model: ${LOCAL_LLM_MODEL:qwen/qwen3.5-9b}
           temperature: 0.3
       embedding:
         options:
