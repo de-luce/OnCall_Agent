@@ -36,3 +36,6 @@ test/
 ### OnCall uploads ###
 src/main/resources/store/*
 !src/main/resources/store/.gitkeep
+
+### Local overrides ###
+src/main/resources/application.yml

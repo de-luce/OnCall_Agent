@@ -4,6 +4,8 @@ import com.deluce.oncall.agent.ChatAgent;
 import com.deluce.oncall.agent.KnowledgeAgent;
 import com.deluce.oncall.agent.OpsAgent;
 import com.deluce.oncall.dto.*;
+import com.deluce.oncall.history.ChatHistoryRepository;
+import com.deluce.oncall.memory.ConversationMemoryService;
 import com.deluce.oncall.rag.KnowledgeCatalog;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import reactor.core.publisher.Flux;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 public class OnCallService {
@@ -21,6 +24,8 @@ public class OnCallService {
     private final KnowledgeAgent knowledgeAgent;
     private final OpsAgent opsAgent;
     private final KnowledgeCatalog knowledgeCatalog;
+    private final ChatHistoryRepository historyRepository;
+    private final ConversationMemoryService memoryService;
     private final Path uploadDir;
 
     public OnCallService(
@@ -28,12 +33,16 @@ public class OnCallService {
             KnowledgeAgent knowledgeAgent,
             OpsAgent opsAgent,
             KnowledgeCatalog knowledgeCatalog,
+            ChatHistoryRepository historyRepository,
+            ConversationMemoryService memoryService,
             @Value("${oncall.upload.storage-dir}") String uploadDir) throws Exception {
         this.chatAgent = chatAgent;
         this.knowledgeAgent = knowledgeAgent;
         this.opsAgent = opsAgent;
         this.knowledgeCatalog = knowledgeCatalog;
-        this.uploadDir = Path.of(uploadDir);
+        this.historyRepository = historyRepository;
+        this.memoryService = memoryService;
+        this.uploadDir = Path.of(uploadDir).toAbsolutePath().normalize();
         Files.createDirectories(this.uploadDir);
     }
 
@@ -43,9 +52,9 @@ public class OnCallService {
         return new ChatResponse(sessionId, answer);
     }
 
-    public Flux<String> chatStream(ChatRequest request) {
+    public Flux<String> chatStream(ChatRequest request, AtomicBoolean cancelled) {
         String sessionId = resolveSessionId(request.sessionId());
-        return chatAgent.chatStream(request.message(), sessionId);
+        return chatAgent.chatStream(request.message(), sessionId, cancelled);
     }
 
     public UploadResponse uploadFile(MultipartFile file) throws Exception {
@@ -79,6 +88,32 @@ public class OnCallService {
         String sessionId = resolveSessionId(request.sessionId());
         String answer = knowledgeAgent.answer(request.message());
         return new ChatResponse(sessionId, answer);
+    }
+
+    public HistorySessionListResponse listHistorySessions(int limit, int offset) {
+        return new HistorySessionListResponse(historyRepository.listSessions(limit, offset));
+    }
+
+    public HistoryMessagesResponse getHistoryMessages(String sessionId) {
+        String convId = memoryService.conversationId(sessionId);
+        ChatHistoryRepository.SessionMeta session = historyRepository.getSession(convId)
+                .orElseThrow(() -> new IllegalArgumentException("会话不存在"));
+        ChatHistoryRepository.LoadedSession loaded = historyRepository.loadSession(convId);
+        return new HistoryMessagesResponse(
+                convId,
+                session.title(),
+                session.summary(),
+                loaded.messages()
+        );
+    }
+
+    public boolean deleteHistorySession(String sessionId) {
+        String convId = memoryService.conversationId(sessionId);
+        boolean deleted = historyRepository.deleteSession(convId);
+        if (deleted) {
+            memoryService.clearSessionCache(convId);
+        }
+        return deleted;
     }
 
     private String resolveSessionId(String sessionId) {

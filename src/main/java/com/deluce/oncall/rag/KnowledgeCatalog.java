@@ -30,15 +30,24 @@ public class KnowledgeCatalog {
     private static final Logger log = LoggerFactory.getLogger(KnowledgeCatalog.class);
 
     private final Path uploadDir;
+    private final MilvusVectorStore vectorStore;
     private final ConcurrentMap<String, KnowledgeDocumentItem> documents = new ConcurrentHashMap<>();
     private final Set<String> keywords = ConcurrentHashMap.newKeySet();
 
-    public KnowledgeCatalog(@Value("${oncall.upload.storage-dir}") String uploadDir) {
-        this.uploadDir = Path.of(uploadDir);
+    public KnowledgeCatalog(
+            @Value("${oncall.upload.storage-dir}") String uploadDir,
+            MilvusVectorStore vectorStore) {
+        this.uploadDir = Path.of(uploadDir).toAbsolutePath().normalize();
+        this.vectorStore = vectorStore;
     }
 
     @PostConstruct
     void loadExistingUploads() {
+        try {
+            Files.createDirectories(uploadDir);
+        } catch (IOException e) {
+            log.warn("创建上传目录失败: {}", e.getMessage());
+        }
         if (!Files.isDirectory(uploadDir)) {
             return;
         }
@@ -49,6 +58,7 @@ public class KnowledgeCatalog {
         } catch (IOException e) {
             log.warn("扫描上传目录失败: {}", e.getMessage());
         }
+        log.info("Knowledge catalog loaded from {} documents={}", uploadDir, documents.size());
     }
 
     public void registerIngested(Path filePath, List<Document> chunks, int chunkCount) {
@@ -81,10 +91,11 @@ public class KnowledgeCatalog {
             return;
         }
         String displayName = KeywordExtractor.displayNameFromPath(fileName);
+        int chunkCount = vectorStore.countBySource(fileName);
         documents.put(fileName, new KnowledgeDocumentItem(
                 fileName,
                 displayName,
-                0,
+                chunkCount,
                 filePath.toFile().lastModified()
         ));
         keywords.add(displayName);

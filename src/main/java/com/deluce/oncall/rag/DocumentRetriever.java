@@ -1,11 +1,14 @@
 package com.deluce.oncall.rag;
 
 import com.deluce.oncall.config.RagProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -13,6 +16,8 @@ import java.util.List;
  */
 @Component
 public class DocumentRetriever {
+
+    private static final Logger log = LoggerFactory.getLogger(DocumentRetriever.class);
 
     private final VectorStore vectorStore;
     private final RagProperties ragProperties;
@@ -23,12 +28,18 @@ public class DocumentRetriever {
     }
 
     public List<Document> retrieve(String query) {
-        return vectorStore.similaritySearch(
-                SearchRequest.builder()
-                        .query(query)
-                        .topK(ragProperties.topK())
-                        .build()
-        );
+        try {
+            return vectorStore.similaritySearch(
+                    SearchRequest.builder()
+                            .query(query)
+                            .topK(ragProperties.topK())
+                            .build()
+            );
+        } catch (Exception e) {
+            log.warn("[RAG 检索失败] query={}, error={}", query, e.getMessage());
+            log.debug("[RAG 检索失败] 详细堆栈", e);
+            return Collections.emptyList();
+        }
     }
 
     public String buildContext(String query) {

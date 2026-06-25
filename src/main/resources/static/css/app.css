@@ -23,17 +23,24 @@
     padding: 0;
 }
 
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+}
+
 body {
     font-family: var(--font);
     background: var(--bg);
     color: var(--text);
     line-height: 1.6;
-    min-height: 100vh;
 }
 
 .app {
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
+    min-height: 0;
+    overflow: hidden;
 }
 
 /* Sidebar */
@@ -45,6 +52,8 @@ body {
     flex-direction: column;
     padding: 1.25rem;
     flex-shrink: 0;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .brand {
@@ -165,6 +174,7 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
+    min-height: 0;
     overflow: hidden;
 }
 
@@ -172,6 +182,7 @@ body {
     display: none;
     flex-direction: column;
     flex: 1;
+    min-height: 0;
     overflow: hidden;
 }
 
@@ -212,14 +223,148 @@ body {
     accent-color: var(--primary);
 }
 
+/* Chat layout */
+.chat-layout {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    overflow: hidden;
+}
+
+.chat-history-panel {
+    width: 240px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    background: var(--bg-elevated);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.chat-history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.chat-history-header h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.history-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.history-item-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.25rem;
+}
+
+.history-item-row .history-item {
+    flex: 1;
+    min-width: 0;
+}
+
+.history-item {
+    width: 100%;
+    text-align: left;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.history-item:hover {
+    background: var(--bg-hover);
+}
+
+.history-item.active {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.25);
+}
+
+.history-item-title {
+    font-size: 0.82rem;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.history-item-meta {
+    margin-top: 0.25rem;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.history-item-delete {
+    flex-shrink: 0;
+    width: 2rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.history-item-row:hover .history-item-delete,
+.history-item-delete:focus-visible {
+    opacity: 1;
+}
+
+.history-item-delete:hover {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.25);
+    color: var(--danger);
+}
+
+.history-empty {
+    padding: 1rem 0.75rem;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.chat-main {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 /* Chat */
 .chat-messages {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    overscroll-behavior: contain;
 }
 
 .message {
@@ -239,8 +384,66 @@ body {
 
 .message.assistant {
     align-self: flex-start;
+    width: min(36rem, 85%);
+    max-width: min(36rem, 85%);
     background: var(--assistant-bg);
     border: 1px solid var(--border);
+    box-sizing: border-box;
+}
+
+.message.assistant .thinking-status {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.message.assistant .thinking-status.hidden {
+    display: none;
+}
+
+.message.assistant.loading .thinking-status::after {
+    content: "▋";
+    animation: blink 1s step-end infinite;
+    margin-left: 2px;
+}
+
+.message.assistant .thinking-block {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    border-left: 3px solid var(--border);
+    padding: 0.35rem 0 0.35rem 0.75rem;
+    margin-bottom: 0.65rem;
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    scroll-behavior: auto;
+}
+
+.message.assistant .thinking-block.hidden {
+    display: none;
+}
+
+.message.assistant .thinking-text {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.message.assistant .answer-block:empty {
+    display: none;
+}
+
+.message.assistant .answer-block {
+    width: 100%;
+    max-height: min(60vh, 520px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .message.system {
@@ -251,7 +454,7 @@ body {
     padding: 0.5rem;
 }
 
-.message.loading::after {
+.message.loading:not(.assistant)::after {
     content: "▋";
     animation: blink 1s step-end infinite;
     margin-left: 2px;
@@ -313,6 +516,14 @@ body {
     background: var(--primary-hover);
 }
 
+.btn-primary.btn-stop {
+    background: #c0392b;
+}
+
+.btn-primary.btn-stop:hover:not(:disabled) {
+    background: #a93226;
+}
+
 .btn-ghost {
     background: transparent;
     color: var(--text-muted);
@@ -346,6 +557,8 @@ body {
     gap: 1.25rem;
     overflow-y: auto;
     flex: 1;
+    min-height: 0;
+    overscroll-behavior: contain;
 }
 
 .card {
@@ -401,11 +614,40 @@ body {
     margin-bottom: 0.75rem;
 }
 
+.keyword-list-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
 .keyword-list {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
     min-height: 2rem;
+}
+
+.keyword-list.is-collapsed {
+    max-height: 2.15rem;
+    overflow: hidden;
+}
+
+.keyword-toggle {
+    align-self: flex-start;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--primary);
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+
+.keyword-toggle:hover {
+    text-decoration: underline;
+}
+
+.keyword-toggle.hidden {
+    display: none;
 }
 
 .keyword-tag {

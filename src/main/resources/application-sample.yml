@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: OnCall_Agent
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:oncall_agent}?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Shanghai
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:lm-studio}}
+      base-url: ${OPENAI_API_BASE_URL:http://127.0.0.1:1234}
+      chat:
+        options:
+          model: ${LOCAL_LLM_MODEL:qwen/qwen3.5-9b}
+          temperature: 0.3
+      embedding:
+        options:
+          model: ${EMBEDDING_MODEL:text-embedding-nomic-embed-text-v1.5}
+
+oncall:
+  milvus:
+    uri: ${MILVUS_URI:http://127.0.0.1:19530}
+    user: ${MILVUS_USER:root}
+    password: ${MILVUS_PASSWORD:}
+    collection: ${MILVUS_COLLECTION:oncall_knowledge}
+    embedding-dimension: ${EMBEDDING_DIMENSION:768}
+  rag:
+    chunk-size: 800
+    chunk-overlap: 200
+    top-k: 5
+  memory:
+    max-messages: 20
+    summary-threshold: 12
+  upload:
+    storage-dir: ${ONCALL_STORE_DIR:src/main/resources/store}
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.deluce.oncall: DEBUG
+    org.springframework.ai: INFO

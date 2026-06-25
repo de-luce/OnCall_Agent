@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OnCall Agent</title>
-    <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/app.css?v=8">
 </head>
 <body>
 <div class="app">
@@ -35,9 +35,8 @@
                 <span class="status-dot"></span>
                 <span>检测中...</span>
             </div>
-            <label class="session-label">会话 ID</label>
-            <input type="text" id="sessionId" class="session-input" placeholder="自动生成">
-            <button type="button" class="btn btn-ghost btn-sm" id="newSessionBtn">新建会话</button>
+            <label class="session-label">当前会话</label>
+            <input type="text" id="sessionId" class="session-input" placeholder="自动生成" readonly>
         </div>
     </aside>
 
@@ -47,18 +46,29 @@
             <header class="panel-header">
                 <div>
                     <h2>智能对话</h2>
-                    <p>ReAct 模式 · 支持知识库检索 · SSE 流式输出</p>
+                    <p>ReAct 模式 · 生成时展示思考过程 · 完成后仅显示回复</p>
                 </div>
                 <label class="toggle">
                     <input type="checkbox" id="streamToggle" checked>
                     <span>流式输出</span>
                 </label>
             </header>
-            <div class="chat-messages" id="chatMessages"></div>
-            <form class="chat-input-bar" id="chatForm">
-                <textarea id="chatInput" rows="1" placeholder="输入运维问题，例如：连接池耗尽怎么排查？"></textarea>
-                <button type="submit" class="btn btn-primary" id="chatSendBtn">发送</button>
-            </form>
+            <div class="chat-layout">
+                <aside class="chat-history-panel">
+                    <div class="chat-history-header">
+                        <h3>历史会话</h3>
+                        <button type="button" class="btn btn-ghost btn-sm" id="newSessionBtn">新建</button>
+                    </div>
+                    <div class="history-list" id="historyList"></div>
+                </aside>
+                <div class="chat-main">
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <form class="chat-input-bar" id="chatForm">
+                        <textarea id="chatInput" rows="1" placeholder="输入运维问题，例如：连接池耗尽怎么排查？"></textarea>
+                        <button type="submit" class="btn btn-primary" id="chatSendBtn">发送</button>
+                    </form>
+                </div>
+            </div>
         </section>
 
         <!-- 知识库 -->
@@ -86,7 +96,10 @@
                     <h3>知识库关键词</h3>
                     <p class="hint">来自已上传文档的标题与要点，点击可快速填入提问框。</p>
                     <div class="keyword-meta" id="keywordMeta">加载中...</div>
-                    <div class="keyword-list" id="keywordList"></div>
+                    <div class="keyword-list-wrap">
+                        <div class="keyword-list is-collapsed" id="keywordList"></div>
+                        <button type="button" class="keyword-toggle hidden" id="keywordToggle">展开全部</button>
+                    </div>
                     <div class="document-list hidden" id="documentList"></div>
                 </div>
                 <div class="card">
@@ -144,6 +157,6 @@
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
-<script src="/js/app.js"></script>
+<script src="/js/app.js?v=10"></script>
 </body>
 </html>

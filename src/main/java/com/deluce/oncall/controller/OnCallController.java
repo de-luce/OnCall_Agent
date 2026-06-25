@@ -3,13 +3,17 @@ package com.deluce.oncall.controller;
 import com.deluce.oncall.dto.*;
 import com.deluce.oncall.service.OnCallService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @RestController
 @RequestMapping("/api")
@@ -29,18 +33,39 @@ public class OnCallController {
     @PostMapping(value = "/chat_stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter chatStream(@Valid @RequestBody ChatRequest request) {
         SseEmitter emitter = new SseEmitter(300_000L);
-        Flux<String> stream = onCallService.chatStream(request);
-        stream.subscribe(
+        AtomicBoolean cancelled = new AtomicBoolean(false);
+
+        Runnable markCancelled = () -> cancelled.set(true);
+        emitter.onCompletion(markCancelled);
+        emitter.onTimeout(markCancelled);
+        emitter.onError(ex -> cancelled.set(true));
+
+        Flux<String> stream = onCallService.chatStream(request, cancelled);
+        Disposable subscription = stream.subscribe(
                 chunk -> {
+                    if (cancelled.get()) {
+                        return;
+                    }
                     try {
                         emitter.send(SseEmitter.event().data(chunk));
-                    } catch (IOException e) {
-                        emitter.completeWithError(e);
+                    } catch (IOException | IllegalStateException e) {
+                        cancelled.set(true);
+                        emitter.complete();
                     }
                 },
-                emitter::completeWithError,
-                emitter::complete
+                error -> {
+                    if (!cancelled.get()) {
+                        emitter.completeWithError(error);
+                    }
+                },
+                () -> {
+                    if (!cancelled.get()) {
+                        emitter.complete();
+                    }
+                }
         );
+
+        emitter.onCompletion(subscription::dispose);
         return emitter;
     }
 
@@ -62,6 +87,27 @@ public class OnCallController {
     @PostMapping("/knowledge/chat")
     public ApiResult<ChatResponse> knowledgeChat(@Valid @RequestBody ChatRequest request) {
         return ApiResult.ok(onCallService.knowledgeChat(request));
+    }
+
+    @GetMapping("/history/sessions")
+    public ApiResult<HistorySessionListResponse> historySessions(
+            @RequestParam(defaultValue = "50") int limit,
+            @RequestParam(defaultValue = "0") int offset) {
+        return ApiResult.ok(onCallService.listHistorySessions(limit, offset));
+    }
+
+    @GetMapping("/history/sessions/{sessionId}/messages")
+    public ApiResult<HistoryMessagesResponse> historyMessages(@PathVariable String sessionId) {
+        return ApiResult.ok(onCallService.getHistoryMessages(sessionId));
+    }
+
+    @DeleteMapping("/history/sessions/{sessionId}")
+    public ResponseEntity<ApiResult<Boolean>> deleteHistorySession(@PathVariable String sessionId) {
+        if (!onCallService.deleteHistorySession(sessionId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResult.fail("会话不存在"));
+        }
+        return ResponseEntity.ok(ApiResult.ok(true));
     }
 
     @GetMapping("/health")
